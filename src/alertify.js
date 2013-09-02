@@ -27,7 +27,7 @@
 			},
 			input   : "<div class=\"alertify-text-wrapper\"><input type=\"text\" class=\"alertify-text\" id=\"alertify-text\"></div>",
 			message : "<p class=\"alertify-message\">{{message}}</p>",
-			log     : "<article class=\"alertify-log{{class}}\">{{message}}</article>"
+			log     : "<article class=\"alertify-log{{class}}\">{{message}}</article>",
 		};
 
 		/**
@@ -245,23 +245,32 @@
 				var html    = "",
 				    type    = item.type,
 				    message = item.message,
-				    css     = item.cssClass || "";
+				    css     = item.cssClass || "",
+				    form;
+
+				if (typeof(item.message) === "object") {
+					message = item.message.message;
+					form = item.message.form;
+				} else {
+					message = item.message;	
+				}
 
 				html += "<div class=\"alertify-dialog\">";
 
 				if (_alertify.buttonFocus === "none") html += "<a href=\"#\" id=\"alertify-noneFocus\" class=\"alertify-hidden\"></a>";
 
-				if (type === "prompt") html += "<form id=\"alertify-form\">";
+				if (type === "prompt" || type === "form") html += "<form id=\"alertify-form\">";
 
 				html += "<article class=\"alertify-inner\">";
 				html += dialogs.message.replace("{{message}}", message);
 
 				if (type === "prompt") html += dialogs.input;
+				if (type === "form") html += form;
 
 				html += dialogs.buttons.holder;
 				html += "</article>";
 
-				if (type === "prompt") html += "</form>";
+				if (type === "prompt" || type === "form") html += "</form>";
 
 				html += "<a id=\"alertify-resetFocus\" class=\"alertify-resetFocus\" href=\"#\">Reset Focus</a>";
 				html += "</div>";
@@ -278,6 +287,10 @@
 				case "alert":
 					html = html.replace("{{buttons}}", dialogs.buttons.ok);
 					html = html.replace("{{ok}}", this.labels.ok);
+					break;
+				case "form":
+					html = html.replace("{{buttons}}", this.appendButtons(dialogs.buttons.cancel, dialogs.buttons.submit));
+					html = html.replace("{{ok}}", this.labels.ok).replace("{{cancel}}", this.labels.cancel);
 					break;
 				default:
 					break;
@@ -360,7 +373,7 @@
 					else check();
 				};
 				// error catching
-				if (typeof message !== "string") throw new Error("message must be a string");
+				if (typeof message !== "string" || typeof message !== 'object') throw new Error("message must be a string or an object");
 				if (typeof type !== "string") throw new Error("type must be a string");
 				if (typeof fn !== "undefined" && typeof fn !== "function") throw new Error("fn must be a function");
 				// initialize alertify if it hasn't already been done
@@ -606,6 +619,7 @@
 			init    : _alertify.init,
 			log     : function (message, type, wait) { _alertify.log(message, type, wait); return this; },
 			prompt  : function (message, fn, placeholder, cssClass) { _alertify.dialog(message, "prompt", fn, placeholder, cssClass); return this; },
+			form    : function (message, fn, placeholder, cssClass) { _alertify.dialog(message, "form", fn, placeholder, cssClass); return this; },
 			success : function (message, wait) { _alertify.log(message, "success", wait); return this; },
 			error   : function (message, wait) { _alertify.log(message, "error", wait); return this; },
 			set     : function (args) { _alertify.set(args); },
