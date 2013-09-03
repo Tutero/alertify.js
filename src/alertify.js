@@ -119,7 +119,7 @@
 			addListeners : function (fn) {
 				var hasOK     = (typeof btnOK !== "undefined"),
 				    hasCancel = (typeof btnCancel !== "undefined"),
-				    hasInput  = (typeof input !== "undefined"),
+				    hasInput  = (typeof input !== "undefined") || (typeof form !== "undefined"),
 				    val       = "",
 				    self      = this,
 				    ok, cancel, common, key, reset;
@@ -128,12 +128,15 @@
 				ok = function (event) {
 					if (typeof event.preventDefault !== "undefined") event.preventDefault();
 					common(event);
-					if (typeof input !== "undefined") val = input.value;
+					if (typeof form !== "undefined") {
+						var serialized = jQuery(form).serializeArray();
+						var val = {};
+						serialized.map(function(el) {
+							val[el.name] = el.value;
+						});
+					}
 					if (typeof fn === "function") {
-						if (typeof input !== "undefined") {
-							fn(true, val);
-						}
-						else fn(true);
+						fn(true, val);
 					}
 					return false;
 				};
@@ -245,12 +248,13 @@
 				var html    = "",
 				    type    = item.type,
 				    message = item.message,
-				    css     = item.cssClass || "",
-				    form;
+				 	formContent    = null,
+				    css     = item.cssClass || "";
 
 				if (typeof(item.message) === "object") {
 					message = item.message.message;
-					form = item.message.form;
+					formContent = item.message.form;
+					item.message = item.message.message;
 				} else {
 					message = item.message;	
 				}
@@ -265,7 +269,7 @@
 				html += dialogs.message.replace("{{message}}", message);
 
 				if (type === "prompt") html += dialogs.input;
-				if (type === "form") html += form;
+				if (type === "form") html += formContent;
 
 				html += dialogs.buttons.holder;
 				html += "</article>";
@@ -373,7 +377,7 @@
 					else check();
 				};
 				// error catching
-				if (typeof message !== "string" || typeof message !== 'object') throw new Error("message must be a string or an object");
+				if (typeof message !== "string" && typeof message !== "object") throw new Error("message must be a string or an object");
 				if (typeof type !== "string") throw new Error("type must be a string");
 				if (typeof fn !== "undefined" && typeof fn !== "function") throw new Error("fn must be a function");
 				// initialize alertify if it hasn't already been done
@@ -551,6 +555,9 @@
 				if (input) {
 					input.focus();
 					input.select();
+				}
+				else if (form) {
+					form.focus();
 				}
 				else btnFocus.focus();
 			},
